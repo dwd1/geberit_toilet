@@ -39,10 +39,11 @@ Not every Geberit device exposes the same capabilities. The integration is desig
 1. Open HACS.
 2. Add this repository as a custom repository.
 3. Select the **Integration** category.
-4. Install **Geberit Toilet**.
-5. Restart Home Assistant.
-6. Open **Settings** -> **Devices & Services**.
-7. Add **Geberit Toilet**.
+4. In HACS, open **Geberit Toilet**.
+5. Click **Download**.
+6. Restart Home Assistant.
+7. Open **Settings** -> **Devices & Services**.
+8. Add **Geberit Toilet**.
 
 ### Manual
 
@@ -249,6 +250,22 @@ When this switch is turned off:
 This is useful if you want to temporarily use the official Geberit app, because the device typically allows only one active connection at a time.
 
 When the switch is turned on again, the integration reconnects and resumes normal operation.
+
+## Integration Ready Sensor
+
+The integration also exposes an **Integration Ready** binary sensor.
+
+This sensor tells you whether the BLE connection is currently up and the integration is actually ready for use.
+
+This is especially useful:
+
+- after Home Assistant restarts;
+- after intentionally disconnecting the integration;
+- after accidental disconnects caused by range, interference, adapter issues, or other BLE problems.
+
+The sensor turns on only when the integration has successfully re-established the BLE connection and completed a real live refresh in the current Home Assistant session.
+
+If it is off, the integration may still be starting up, reconnecting, or waiting to recover from a dropped connection.
 
 ## Notifications vs Polling
 

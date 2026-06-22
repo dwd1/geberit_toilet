@@ -2,7 +2,8 @@ from __future__ import annotations
 import asyncio
 import logging
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant, callback
 from .config_helpers import normalize_communication_mode
 from .const import (
     CONF_COMMUNICATION_MODE,
@@ -16,6 +17,21 @@ GeberitToiletConfigEntry = ConfigEntry[GeberitToiletCoordinator]
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
+
+
+@callback
+def _schedule_post_start_refresh(hass: HomeAssistant, coordinator: GeberitToiletCoordinator) -> None:
+    @callback
+    def _start_refresh(_event=None) -> None:
+        hass.async_create_task(coordinator.async_refresh())
+
+    if hass.is_running:
+        _start_refresh()
+        return
+
+    coordinator._entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _start_refresh)
+    )
 
 async def async_setup_entry(hass: HomeAssistant, entry: GeberitToiletConfigEntry) -> bool:
     _LOGGER.info('Setting up Geberit Toilet integration')
@@ -38,11 +54,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: GeberitToiletConfigEntry
     coordinator = GeberitToiletCoordinator(hass, entry)
     coordinator.set_metadata_name_translations(await hass.async_add_executor_job(load_metadata_name_translations_sync, hass.config.language or 'en'))
     await coordinator.async_load_discovery_cache()
-    await asyncio.sleep(2.0)
-    await coordinator.async_config_entry_first_refresh()
-    await coordinator.async_refresh_report_catalog()
+    await coordinator.async_load_state_cache()
     entry.runtime_data = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    if coordinator.startup_cache_loaded:
+        await coordinator.async_refresh_report_catalog()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        _schedule_post_start_refresh(hass, coordinator)
+    else:
+        await asyncio.sleep(2.0)
+        await coordinator.async_config_entry_first_refresh()
+        await coordinator.async_refresh_report_catalog()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 

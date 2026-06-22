@@ -146,6 +146,9 @@
     "binary_sensor": {
       "ble_connection": {
         "name": "BLE Connection Status"
+      },
+      "integration_ready": {
+        "name": "Integration Ready"
       }
     },
     "select": {

@@ -80,6 +80,7 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
         self._connection_enabled_event = asyncio.Event()
         self._connection_enabled_event.set()
         self._discovery_store: Store[dict[str, Any]] = Store(hass, 1, f'{DOMAIN}_{entry.entry_id}_discovery')
+        self._state_store: Store[dict[str, Any]] = Store(hass, 1, f'{DOMAIN}_{entry.entry_id}_state')
         self._report_files: list[str] = []
         self._selected_report_left: str | None = None
         self._selected_report_right: str | None = None
@@ -88,6 +89,8 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
         self._active_client: Ble20Client | None = None
         self._listener_tasks: list[asyncio.Task] = []
         self._connection_loop_task: asyncio.Task | None = None
+        self._startup_cache_loaded = False
+        self._integration_ready = False
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=self._poll_interval)
         self._connection_loop_task = asyncio.create_task(self._connection_loop())
 
@@ -348,6 +351,7 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
         self._dp_metadata = build_dp_metadata(inv)
         for dp_id in self._discovered_non_inventory_dpids:
             self._register_runtime_dp_id(dp_id)
+        await self._async_save_state_cache()
 
     @property
     def known_dp_ids(self) -> set[int]:
@@ -383,6 +387,148 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
             return
         await self._discovery_store.async_save({'request_data_mode': self._request_data_mode, 'discovered_non_inventory_dpids': sorted(self._discovered_non_inventory_dpids), 'read_targets': {str(dp_id): list(targets) for (dp_id, targets) in self._read_targets.items()}, 'all_known_scan_completed': self._all_known_scan_completed})
         self._discovery_cache_dirty = False
+
+    @property
+    def startup_cache_loaded(self) -> bool:
+        return self._startup_cache_loaded
+
+    @property
+    def integration_ready(self) -> bool:
+        return self._integration_ready and self.poll_enabled and self.ble_connected
+
+    def _serialize_data_cache_key(self, key: Any) -> str:
+        if isinstance(key, tuple) and len(key) == 2:
+            return f'{int(key[0])}:{int(key[1])}'
+        return str(int(key))
+
+    def _deserialize_data_cache_key(self, key: str) -> int | tuple[int, int]:
+        if ':' not in key:
+            return int(key)
+        raw_dp_id, raw_instance = key.split(':', 1)
+        return (int(raw_dp_id), int(raw_instance))
+
+    async def async_load_state_cache(self) -> None:
+        cached = await self._state_store.async_load()
+        if not cached:
+            return
+        loaded_any = False
+        if self.use_dpids:
+            inventory_raw = cached.get('inventory')
+            if isinstance(inventory_raw, dict) and inventory_raw:
+                inventory: dict[int, Any] = {}
+                for raw_dp_id, inv_entry in inventory_raw.items():
+                    try:
+                        inventory[int(raw_dp_id)] = dict(inv_entry)
+                    except (TypeError, ValueError):
+                        continue
+                if inventory:
+                    for dp_id in self._configured_include_dpids:
+                        if dp_id not in inventory:
+                            inventory[dp_id] = {'instance': 0, 'version': 1, 'datatype': 0, 'min_s': 0, 'max_s': 0, 'min_u': 0, 'max_u': 0, 'is_internal': False, 'behavior': 0}
+                    self._inventory = inventory
+                    self._dp_metadata = build_dp_metadata(inventory)
+                    for dp_id in self._discovered_non_inventory_dpids:
+                        self._register_runtime_dp_id(dp_id)
+                    raw_cache_payload = cached.get('raw_cache', {})
+                    parsed_raw_cache: dict[int | tuple[int, int], bytes] = {}
+                    if isinstance(raw_cache_payload, dict):
+                        for raw_key, raw_hex in raw_cache_payload.items():
+                            if not isinstance(raw_hex, str):
+                                continue
+                            try:
+                                parsed_raw_cache[self._deserialize_data_cache_key(str(raw_key))] = bytes.fromhex(raw_hex)
+                            except ValueError:
+                                continue
+                    self._raw_cache = parsed_raw_cache
+                    data_payload = cached.get('data', {})
+                    parsed_data: dict[int | tuple[int, int], Any] = {}
+                    if isinstance(data_payload, dict):
+                        for raw_key, value in data_payload.items():
+                            try:
+                                parsed_data[self._deserialize_data_cache_key(str(raw_key))] = value
+                            except ValueError:
+                                continue
+                    if parsed_data:
+                        self.async_set_updated_data(parsed_data)
+                    loaded_any = True
+        if self.use_gatt:
+            gatt_chars_payload = cached.get('gatt_characteristics', {})
+            parsed_chars: dict[str, RuntimeGattCharacteristic] = {}
+            if isinstance(gatt_chars_payload, dict):
+                for uuid, payload in gatt_chars_payload.items():
+                    if not isinstance(payload, dict):
+                        continue
+                    try:
+                        parsed_chars[str(uuid).lower()] = RuntimeGattCharacteristic(
+                            uuid=str(payload['uuid']).lower(),
+                            service_uuid=str(payload['service_uuid']).lower(),
+                            service_name=str(payload['service_name']),
+                            key=str(payload['key']),
+                            name=str(payload['name']),
+                            source=str(payload['source']),
+                            decoder=str(payload['decoder']),
+                            properties=tuple(payload.get('properties', ())),
+                            descriptors=tuple(payload.get('descriptors', ())),
+                            readable=bool(payload.get('readable', False)),
+                            writable=bool(payload.get('writable', False)),
+                            notifiable=bool(payload.get('notifiable', False)),
+                            indicatable=bool(payload.get('indicatable', False)),
+                            entity_registry_enabled_default=bool(payload.get('entity_registry_enabled_default', True)),
+                            hidden=bool(payload.get('hidden', False)),
+                        )
+                    except KeyError:
+                        continue
+            if parsed_chars:
+                self._gatt_characteristics = parsed_chars
+                gatt_raw_payload = cached.get('gatt_raw_values', {})
+                if isinstance(gatt_raw_payload, dict):
+                    parsed_gatt_raw: dict[str, bytes] = {}
+                    for uuid, raw_hex in gatt_raw_payload.items():
+                        if not isinstance(raw_hex, str):
+                            continue
+                        try:
+                            parsed_gatt_raw[str(uuid).lower()] = bytes.fromhex(raw_hex)
+                        except ValueError:
+                            continue
+                    self._gatt_raw_values = parsed_gatt_raw
+                gatt_decoded_payload = cached.get('gatt_decoded_values', {})
+                if isinstance(gatt_decoded_payload, dict):
+                    self._gatt_decoded_values = {str(uuid).lower(): value for uuid, value in gatt_decoded_payload.items()}
+                loaded_any = True
+        self._startup_cache_loaded = loaded_any
+
+    async def _async_save_state_cache(self) -> None:
+        if not self.use_dpids and not self.use_gatt:
+            return
+        inventory_payload = {}
+        if self._inventory is not None:
+            inventory_payload = {str(dp_id): dict(inv_entry) for dp_id, inv_entry in self._inventory.items()}
+        data_payload: dict[str, Any] = {}
+        if self.data:
+            data_payload = {self._serialize_data_cache_key(key): self._json_safe(value) for key, value in self.data.items()}
+        raw_cache_payload = {self._serialize_data_cache_key(key): value.hex() for key, value in self._raw_cache.items()}
+        gatt_chars_payload = {
+            uuid: {
+                'uuid': runtime_char.uuid,
+                'service_uuid': runtime_char.service_uuid,
+                'service_name': runtime_char.service_name,
+                'key': runtime_char.key,
+                'name': runtime_char.name,
+                'source': runtime_char.source,
+                'decoder': runtime_char.decoder,
+                'properties': list(runtime_char.properties),
+                'descriptors': list(runtime_char.descriptors),
+                'readable': runtime_char.readable,
+                'writable': runtime_char.writable,
+                'notifiable': runtime_char.notifiable,
+                'indicatable': runtime_char.indicatable,
+                'entity_registry_enabled_default': runtime_char.entity_registry_enabled_default,
+                'hidden': runtime_char.hidden,
+            } for uuid, runtime_char in self._gatt_characteristics.items()
+        }
+        gatt_raw_payload = {uuid: value.hex() for uuid, value in self._gatt_raw_values.items()}
+        gatt_decoded_payload = {uuid: self._json_safe(value) for uuid, value in self._gatt_decoded_values.items()}
+        await self._state_store.async_save({'inventory': inventory_payload, 'data': data_payload, 'raw_cache': raw_cache_payload, 'gatt_characteristics': gatt_chars_payload, 'gatt_raw_values': gatt_raw_payload, 'gatt_decoded_values': gatt_decoded_payload})
 
     def _candidate_read_targets(self, dp_id: int) -> tuple[int | None, ...]:
         meta = self.get_dp_metadata(dp_id)
@@ -461,6 +607,7 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
                 continue
             self._gatt_raw_values[uuid] = raw_value
             self._gatt_decoded_values[uuid] = decode_known_gatt_value(runtime_char, raw_value)
+        await self._async_save_state_cache()
 
     def instance_count_for_dp_id(self, dp_id: int) -> int:
         data = self.data or {}
@@ -510,9 +657,11 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
                 try:
                     if self.use_dpids and self._active_client is not None:
                         data = await self._read_all_supported(self._active_client)
+                        self._integration_ready = True
                         return data
                     if self.use_gatt:
                         await self._refresh_known_gatt_state(self._active_connector)
+                        self._integration_ready = True
                         return self.data or {}
                 except Exception as err:
                     _LOGGER.warning('Failed to read over persistent connection, disconnecting: %s', err)
@@ -533,9 +682,11 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
                         await client.event_storage_inventory(self._capabilities)
                     await client.join(pin=self._pin, inv=self._inventory)
                     data = await self._read_all_supported(client)
+                    self._integration_ready = True
                     return data
                 if self.use_gatt:
                     await self._refresh_known_gatt_state(connector)
+                    self._integration_ready = True
                 return self.data or {}
             except Exception as err:
                 _LOGGER.warning('Error polling Geberit Toilet device: %s — returning cached data', err)
@@ -606,6 +757,7 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
             self._all_known_scan_completed = True
             self._discovery_cache_dirty = True
         await self._async_save_discovery_cache()
+        await self._async_save_state_cache()
         return data
 
     async def _connection_loop(self) -> None:
@@ -642,6 +794,7 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
                             await client.join(pin=self._pin, inv=self._inventory)
                             data = await self._read_all_supported(client)
                             self.async_set_updated_data(data)
+                            self._integration_ready = True
                             to_subscribe = sorted((dp_id for (dp_id, meta) in self._dp_metadata.items() if meta.notifiable and meta.subscribe_notifications and meta.readable and (not meta.hidden) and (meta.instance == 0)))
                             subscribed = []
                             for nid in to_subscribe:
@@ -662,6 +815,7 @@ class GeberitToiletCoordinator(DataUpdateCoordinator[dict[int, Any]]):
                             if self.use_gatt:
                                 await self._refresh_known_gatt_state(connector)
                             self._active_client = None
+                            self._integration_ready = True
                             self.async_set_updated_data(self.data or {})
                             _LOGGER.info('Persistent BLE connection established in %s mode without Ble20 notifications', self._communication_mode)
                     except Exception:

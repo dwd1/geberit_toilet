@@ -14,6 +14,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GeberitToiletConfigEntry
     coordinator = entry.runtime_data
     entities: list[BinarySensorEntity] = []
     entities.append(GeberitToiletConnectionSensor(coordinator, entry))
+    entities.append(GeberitToiletIntegrationReadySensor(coordinator, entry))
     for (dp_id, meta) in coordinator.dp_metadata.items():
         if not coordinator.should_expose_dp_id_as_entity(dp_id):
             continue
@@ -54,6 +55,20 @@ class GeberitToiletConnectionSensor(GeberitToiletEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool:
         return self.coordinator.ble_connected
+
+
+class GeberitToiletIntegrationReadySensor(GeberitToiletEntity, BinarySensorEntity):
+    _attr_has_entity_name = True
+    _attr_translation_key = 'integration_ready'
+    _attr_icon = 'mdi:check-circle-outline'
+
+    def __init__(self, coordinator: GeberitToiletCoordinator, entry: GeberitToiletConfigEntry) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f'{self._device_id}_integration_ready'
+
+    @property
+    def is_on(self) -> bool:
+        return self.coordinator.integration_ready
 
 class GeberitToiletGenericBinarySensor(GeberitToiletEntity, BinarySensorEntity):
 
