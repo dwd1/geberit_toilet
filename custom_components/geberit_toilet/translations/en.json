@@ -1,0 +1,179 @@
+{
+  "lookup": {
+    "request_data_mode_options": {
+      "inventory_only": "Only inventory",
+      "all_known": "All known DPIDs (adding can be slow)"
+    },
+    "communication_mode_options": {
+      "gatt": "GATT (Useless diagnostic datas)",
+      "both": "Both",
+      "dpids": "DPIDs"
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Geberit Toilet",
+        "description": "Enter the BLE MAC address and pairing PIN (optional if device is unprotected) of your Geberit Toilet.",
+        "data": {
+          "device_id": "BLE MAC Address (XX:XX:XX:XX:XX:XX)",
+          "pin": "Pairing PIN (optional)",
+          "use_esphome_proxy": "Use ESPHome Bluetooth Proxy",
+          "poll_interval": "Poll Interval (seconds)",
+          "request_data_mode": "Requested data scope",
+          "communication_mode": "Communication mode",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "include_dpids": "Include DPID list",
+          "exclude_dpids": "Exclude DPID list",
+          "accept_risk": "I understand and accept that I use this integration entirely at my own risk"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Geberit Toilet",
+        "description": "Please enter the pairing details (optional if device is unprotected) for your Geberit Toilet.",
+        "data": {
+          "pin": "Pairing PIN (optional)",
+          "use_esphome_proxy": "Use ESPHome Bluetooth Proxy",
+          "poll_interval": "Poll Interval (seconds)",
+          "request_data_mode": "Requested data scope",
+          "communication_mode": "Communication mode",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "include_dpids": "Include DPID list",
+          "exclude_dpids": "Exclude DPID list",
+          "accept_risk": "I understand and accept that I use this integration entirely at my own risk"
+        }
+      },
+      "esphome": {
+        "title": "ESPHome Bluetooth Proxy Settings",
+        "description": "Enter the connection details for your remote ESPHome Bluetooth Proxy.",
+        "data": {
+          "esphome_host": "ESPHome Host / IP Address",
+          "esphome_port": "ESPHome API Port",
+          "noise_psk": "ESPHome Noise Encryption PSK (optional)",
+          "request_data_mode": "Requested data scope",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "include_dpids": "Include DPID list",
+          "exclude_dpids": "Exclude DPID list",
+          "accept_risk": "I understand and accept that I use this integration entirely at my own risk"
+        }
+      },
+      "include_dpids": {
+        "title": "Included DPIDs",
+        "description": "Enter additional DPIDs that should be included in reads besides the selected base scope.",
+        "data": {
+          "include_dpids": "Include DPID list"
+        }
+      },
+      "exclude_dpids": {
+        "title": "Excluded DPIDs",
+        "description": "Enter DPIDs that should still be read and reported, but should not create Home Assistant entities.",
+        "data": {
+          "exclude_dpids": "Exclude DPID list"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the Geberit Toilet. Verify MAC address, Pairing PIN, proxy settings or BLE range.",
+      "invalid_auth": "Invalid PIN code or pairing protection requires a PIN code.",
+      "risk_ack_required": "You must explicitly accept that you use this integration at your own risk."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Geberit Toilet - Settings",
+        "data": {
+          "pin": "Pairing PIN (optional)",
+          "use_esphome_proxy": "Use ESPHome Bluetooth Proxy",
+          "poll_interval": "Poll Interval (seconds)",
+          "request_data_mode": "Requested data scope",
+          "communication_mode": "Communication mode",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "include_dpids": "Include DPID list",
+          "exclude_dpids": "Exclude DPID list"
+        }
+      },
+      "esphome": {
+        "title": "ESPHome Bluetooth Proxy Settings",
+        "description": "Enter the connection details for your remote ESPHome Bluetooth Proxy.",
+        "data": {
+          "esphome_host": "ESPHome Host / IP Address",
+          "esphome_port": "ESPHome API Port",
+          "noise_psk": "ESPHome Noise Encryption PSK (optional)",
+          "request_data_mode": "Requested data scope",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "include_dpids": "Include DPID list",
+          "exclude_dpids": "Exclude DPID list"
+        }
+      },
+      "include_dpids": {
+        "title": "Included DPIDs",
+        "description": "Enter additional DPIDs that should be included in reads besides the selected base scope.",
+        "data": {
+          "include_dpids": "Include DPID list"
+        }
+      },
+      "exclude_dpids": {
+        "title": "Excluded DPIDs",
+        "description": "Enter DPIDs that should still be read and reported, but should not create Home Assistant entities.",
+        "data": {
+          "exclude_dpids": "Exclude DPID list"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the Geberit Toilet. Verify MAC address, Pairing PIN, proxy settings or BLE range.",
+      "invalid_auth": "Invalid PIN code or pairing protection requires a PIN code."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "ble_connection": {
+        "name": "BLE Connection Status"
+      }
+    },
+    "select": {
+      "report_left": {
+        "name": "Compare report A"
+      },
+      "report_right": {
+        "name": "Compare report B"
+      }
+    },
+    "switch": {
+      "connection": {
+        "name": "BLE Connection"
+      }
+    },
+    "button": {
+      "create_report": {
+        "name": "Create report"
+      },
+      "compare_reports": {
+        "name": "Compare reports"
+      },
+      "clear_reports": {
+        "name": "Clear reports"
+      },
+      "clear_differences": {
+        "name": "Clear compared differences"
+      }
+    }
+  }
+}
