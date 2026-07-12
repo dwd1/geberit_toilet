@@ -1,0 +1,9 @@
+# DPIDs or DPID instances to include in addition to the selected base scope.
+# One or more decimal DPID or DPID instance (DPID.INSTANCE) values per line are supported.
+
+36 # DP_ODOUR_EXTRACTION_AMBIENT_SENS_STEPS
+#83 # DP_START_BOOTLOADER
+#337 # DP_BOOTLOADER_VARIANT
+#373 # DP_DISABLE_RADIO_INTERFACES
+#376 # DP_FLASH_ERASE_PAGE_COUNTER
+#809 # DP_BOOTLOADER_VERSION

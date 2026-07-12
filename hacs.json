@@ -1,0 +1,7 @@
+{
+  "name": "Geberit Toilet",
+  "render_readme": true,
+  "homeassistant": "2024.5.0",
+  "zip_release": true,
+  "filename": "geberit_toilet.zip"
+}

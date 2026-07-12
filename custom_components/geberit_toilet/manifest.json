@@ -1,0 +1,30 @@
+{
+  "domain": "geberit_toilet",
+  "name": "Geberit Toilet",
+  "bluetooth": [
+    {
+      "service_uuid": "3334429d-90f3-4c41-a02d-5cb3a03e0000"
+    },
+    {
+      "service_uuid": "00003ea0-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "service_uuid": "559eb000-2390-11e8-b467-0ed5f89f718b"
+    },
+    {
+      "service_uuid": "0000fd48-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "service_uuid": "559eb100-2390-11e8-b467-0ed5f89f718b"
+    }
+  ],
+  "codeowners": ["@dwd1"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/dwd1/geberit_toilet",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/dwd1/geberit_toilet/issues",
+  "requirements": [],
+  "version": "1.2"
+}

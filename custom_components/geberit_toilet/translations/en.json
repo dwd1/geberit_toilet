@@ -1,0 +1,168 @@
+{
+  "selector": {
+    "request_data_mode": {
+      "options": {
+        "inventory_only": "Only inventory",
+        "all_known": "All known DPIDs"
+      }
+    },
+    "communication_mode": {
+      "options": {
+        "gatt": "GATT (Useless diagnostic datas)",
+        "both": "Both",
+        "dpids": "DPIDs"
+      }
+    }
+  },
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Geberit Toilet",
+        "description": "Add a Geberit device by entering its BLE MAC address and configure the connection and communication settings",
+        "data": {
+          "device_id": "BLE MAC address (XX:XX:XX:XX:XX:XX)",
+          "pin": "Pairing PIN (optional)",
+          "use_esphome_proxy": "Use ESPHome Bluetooth Proxy",
+          "notify_debounce_delay": "Notifications debounce delay (seconds)",
+          "poll_interval": "Poll Interval (seconds)",
+          "communication_mode": "Communication mode",
+          "request_data_mode": "Requested data scope",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "accept_risk": "I understand and accept that I use this integration entirely at my own risk"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Geberit Toilet",
+        "description": "Configure discovered a Geberit device by entering its connection and communication settings",
+        "data": {
+          "pin": "Pairing PIN (optional)",
+          "use_esphome_proxy": "Use ESPHome Bluetooth Proxy",
+          "notify_debounce_delay": "Notifications debounce delay (seconds)",
+          "poll_interval": "Poll Interval (seconds)",
+          "communication_mode": "Communication mode",
+          "request_data_mode": "Requested data scope",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list",
+          "accept_risk": "I understand and accept that I use this integration entirely at my own risk"
+        }
+      },
+      "esphome": {
+        "title": "ESPHome Bluetooth Proxy Settings",
+        "description": "Enter the connection details for your remote ESPHome Bluetooth Proxy",
+        "data": {
+          "esphome_host": "ESPHome Host / IP Address",
+          "esphome_port": "ESPHome API Port",
+          "noise_psk": "ESPHome Noise Encryption PSK (optional)"
+        }
+      },
+      "include_dpids": {
+        "title": "Included DPIDs",
+        "description": "Enter additional DPIDs or DPID instances that should be included in reads besides the selected base scope",
+        "data": {
+          "include_dpids": "Include DPID list"
+        }
+      },
+      "exclude_dpids": {
+        "title": "Excluded DPIDs",
+        "description": "Enter DPIDs or DPID instances that should be completely excluded from communication, entity creation and reports",
+        "data": {
+          "exclude_dpids": "Exclude DPID list"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the Geberit device. Verify MAC address, Pairing PIN, proxy settings or BLE range.",
+      "invalid_auth": "Invalid PIN code or pairing protection requires a PIN code.",
+      "risk_ack_required": "You must explicitly accept that you use this integration at your own risk."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Geberit Toilet - Settings",
+        "data": {
+          "pin": "Pairing PIN (optional)",
+          "use_esphome_proxy": "Use ESPHome Bluetooth Proxy",
+          "notify_debounce_delay": "Notifications debounce delay (seconds)",
+          "poll_interval": "Poll Interval (seconds)",
+          "communication_mode": "Communication mode",
+          "request_data_mode": "Requested data scope",
+          "max_instances_per_dpid_group": "Maximum instances per DPID group to expose automatically",
+          "expose_large_instance_groups": "Expose DPID groups above maximum instance limit",
+          "use_include_dpid_list": "Use include DPID list",
+          "use_exclude_dpid_list": "Use exclude DPID list"
+        }
+      },
+      "esphome": {
+        "title": "ESPHome Bluetooth Proxy Settings",
+        "description": "Enter the connection details for your remote ESPHome Bluetooth Proxy",
+        "data": {
+          "esphome_host": "ESPHome Host / IP Address",
+          "esphome_port": "ESPHome API Port",
+          "noise_psk": "ESPHome Noise Encryption PSK (optional)"
+        }
+      },
+      "include_dpids": {
+        "title": "Included DPIDs",
+        "description": "Enter additional DPIDs or DPID instances that should be included in reads besides the selected base scope",
+        "data": {
+          "include_dpids": "Include DPID list"
+        }
+      },
+      "exclude_dpids": {
+        "title": "Excluded DPIDs",
+        "description": "Enter DPIDs or DPID instances that should be completely excluded from communication, entity creation and reports",
+        "data": {
+          "exclude_dpids": "Exclude DPID list"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the Geberit device. Verify MAC address, Pairing PIN, proxy settings or BLE range.",
+      "invalid_auth": "Invalid PIN code or pairing protection requires a PIN code."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "ble_connection": {
+        "name": "BLE Connection Status"
+      },
+      "integration_ready": {
+        "name": "Integration Ready"
+      }
+    },
+    "select": {
+      "report_left": {
+        "name": "Compare report A"
+      },
+      "report_right": {
+        "name": "Compare report B"
+      }
+    },
+    "switch": {
+      "ble_connection": {
+        "name": "BLE Connection"
+      }
+    },
+    "button": {
+      "create_report": {
+        "name": "Create report"
+      },
+      "compare_reports": {
+        "name": "Compare reports"
+      },
+      "clear_reports": {
+        "name": "Clear reports"
+      },
+      "clear_differences": {
+        "name": "Clear compared differences"
+      }
+    }
+  }
+}
