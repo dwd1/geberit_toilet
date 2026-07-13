@@ -9,13 +9,12 @@
       "service_uuid": "00003ea0-0000-1000-8000-00805f9b34fb"
     },
     {
-      "service_uuid": "559eb000-2390-11e8-b467-0ed5f89f718b"
+      "service_uuid": "559eb000-2390-11e8-b467-0ed5f89f718b",
+      "manufacturer_id": 1538
     },
     {
-      "service_uuid": "0000fd48-0000-1000-8000-00805f9b34fb"
-    },
-    {
-      "service_uuid": "559eb100-2390-11e8-b467-0ed5f89f718b"
+      "service_uuid": "0000fd48-0000-1000-8000-00805f9b34fb",
+      "manufacturer_id": 1538
     }
   ],
   "codeowners": ["@dwd1"],
@@ -26,5 +25,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/dwd1/geberit_toilet/issues",
   "requirements": [],
-  "version": "1.2"
+  "version": "1.3"
 }

@@ -16,11 +16,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create ZIP file
+        working-directory: ./custom_components/geberit_toilet
         run: |
-          cd custom_components
-          zip -r ../geberit_toilet.zip geberit_toilet
+          zip geberit_toilet.zip -r ./
 
       - name: Upload zip to release
         uses: softprops/action-gh-release@v2
         with:
-          files: geberit_toilet.zip
+          files: ./custom_components/geberit_toilet/geberit_toilet.zip
